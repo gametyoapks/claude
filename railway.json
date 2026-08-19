@@ -23,11 +23,11 @@
     },
     "SUPABASE_URL": {
       "description": "Supabase Project URL",
-      "value": ""
+      "value": "https://ezgkggtbeqapynrsesxs.supabase.co"
     },
     "SUPABASE_KEY": {
       "description": "Supabase API Key",
-      "value": ""
+      "value": "sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1""
     },
     "VERIFY_SITE_URL": {
       "description": "Verification Website URL",
