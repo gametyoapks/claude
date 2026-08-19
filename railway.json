@@ -7,7 +7,7 @@
   "variables": {
     "BOT_TOKEN": {
       "description": "Discord Bot Token",
-      "value": ""
+      "value": "MTUzOTMwNDA1NjE3MzEwOTM5OQ.GuBBvV.8QtfE0CGbvz-swt-lSb2IzNzBefHYMoOQ_VNUg"
     },
     "CLIENT_ID": {
       "description": "Discord Application Client ID",
