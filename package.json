@@ -1,0 +1,16 @@
+{
+  "name": "toldclient-bot",
+  "version": "1.0.0",
+  "description": "Discord doğrulama botu",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
