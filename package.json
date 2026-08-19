@@ -1,16 +1,28 @@
 {
   "name": "toldclient-bot",
-  "version": "1.0.0",
-  "description": "Discord doğrulama botu",
+  "version": "2.0.0",
+  "description": "ToldClient Discord Doğrulama Botu - Production Ready",
   "main": "bot.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node bot.js",
-    "dev": "node bot.js"
+    "dev": "node bot.js",
+    "test": "echo \"No tests specified\""
   },
+  "keywords": [
+    "discord",
+    "bot",
+    "verification",
+    "supabase"
+  ],
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.14.0"
+    "discord.js": "^14.14.1"
   },
   "engines": {
-    "node": "18.x"
-  }
+    "node": ">=18.0.0"
+  },
+  "preferGlobal": false,
+  "private": true
 }
