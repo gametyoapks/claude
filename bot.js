@@ -1,6 +1,5 @@
-const { Client, IntentFlags, REST, Routes, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, EmbedBuilder } = require('discord.js');
 
-// Konfigürasyon
 const BOT_TOKEN = process.env.BOT_TOKEN || 'MTUzOTMwNDA1NjE3MzEwOTM5OQ.GuBBvV.8QtfE0CGbvz-swt-lSb2IzNzBefHYMoOQ_VNUg';
 const CLIENT_ID = process.env.CLIENT_ID || '1539304056173109399';
 const GUILD_ID = process.env.GUILD_ID || '1530913629241606255';
@@ -10,25 +9,20 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ezgkggtbeqapynrsesxs.s
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1';
 const VERIFY_SITE_URL = process.env.VERIFY_SITE_URL || 'https://toldclient.netlify.app';
 
-// Client oluştur
 const client = new Client({
   intents: [
-    IntentFlags.Guilds,
-    IntentFlags.GuildMembers,
-    IntentFlags.DirectMessages,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessages,
   ],
 });
 
-// Bot hazır
 client.on('ready', () => {
   console.log(`✅ Bot hazır: ${client.user.tag}`);
   client.user.setActivity('Doğrulama Sistemi', { type: 'WATCHING' });
-
-  // Slash command'ları kaydet
   registerCommands();
 });
 
-// Slash command'ları kaydet
 async function registerCommands() {
   const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
@@ -62,7 +56,6 @@ async function registerCommands() {
   }
 }
 
-// Komutları işle
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -81,7 +74,6 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// /verify komutu
 async function handleVerifyCommand(interaction) {
   const verifyUrl = VERIFY_SITE_URL;
 
@@ -120,7 +112,6 @@ async function handleVerifyCommand(interaction) {
   });
 }
 
-// /check komutu
 async function handleCheckCommand(interaction) {
   const user = interaction.options.getUser('user');
 
@@ -146,12 +137,8 @@ async function handleCheckCommand(interaction) {
     }
 
     const verification = data[0];
-    const verifiedDate = new Date(verification.verified_at).toLocaleDateString(
-      'tr-TR'
-    );
-    const accountDate = new Date(
-      verification.account_created_at
-    ).toLocaleDateString('tr-TR');
+    const verifiedDate = new Date(verification.verified_at).toLocaleDateString('tr-TR');
+    const accountDate = new Date(verification.account_created_at).toLocaleDateString('tr-TR');
 
     const embed = new EmbedBuilder()
       .setColor('#28a745')
@@ -159,27 +146,11 @@ async function handleCheckCommand(interaction) {
       .addFields(
         { name: 'Kullanıcı', value: user.username, inline: true },
         { name: 'Discord ID', value: user.id, inline: true },
-        {
-          name: 'Doğrulama Tarihi',
-          value: verifiedDate,
-          inline: true,
-        },
-        {
-          name: 'Hesap Oluş. Tarihi',
-          value: accountDate,
-          inline: true,
-        },
+        { name: 'Doğrulama Tarihi', value: verifiedDate, inline: true },
+        { name: 'Hesap Oluş. Tarihi', value: accountDate, inline: true },
         { name: 'IP Adresi', value: verification.ip_address, inline: true },
-        {
-          name: 'VPN Durumu',
-          value: verification.vpn_status === 'Evet' ? '🚩 Evet' : '✅ Hayır',
-          inline: true,
-        },
-        {
-          name: 'Rol Verildi',
-          value: verification.role_given ? '✅ Evet' : '❌ Hayır',
-          inline: true,
-        }
+        { name: 'VPN Durumu', value: verification.vpn_status === 'Evet' ? '🚩 Evet' : '✅ Hayır', inline: true },
+        { name: 'Rol Verildi', value: verification.role_given ? '✅ Evet' : '❌ Hayır', inline: true }
       )
       .setTimestamp();
 
@@ -192,7 +163,6 @@ async function handleCheckCommand(interaction) {
   }
 }
 
-// Yeni üye katıldığında kontrol et
 client.on('guildMemberAdd', async (member) => {
   console.log(`👤 Yeni üye: ${member.user.tag}`);
 
@@ -235,22 +205,11 @@ client.on('guildMemberAdd', async (member) => {
       const embed = new EmbedBuilder()
         .setColor('#28a745')
         .setTitle('✅ Doğrulama Başarılı!')
-        .setDescription(
-          'Sunucuya katılmaya onay verildı. Üye rolü verildi.'
-        )
+        .setDescription('Sunucuya katılmaya onay verildı. Üye rolü verildi.')
         .addFields(
-          {
-            name: '👤 Hesap Bilgileri',
-            value: `**Kullanıcı:** ${member.user.username}\n**ID:** ${member.id}`,
-          },
-          {
-            name: '🔍 Kontrol Bilgileri',
-            value: `**IP:** ${verification.ip_address}\n**VPN:** ${verification.vpn_status}`,
-          },
-          {
-            name: '📅 Doğrulama Tarihi',
-            value: new Date(verification.verified_at).toLocaleDateString('tr-TR'),
-          }
+          { name: '👤 Hesap Bilgileri', value: `**Kullanıcı:** ${member.user.username}\n**ID:** ${member.id}` },
+          { name: '🔍 Kontrol Bilgileri', value: `**IP:** ${verification.ip_address}\n**VPN:** ${verification.vpn_status}` },
+          { name: '📅 Doğrulama Tarihi', value: new Date(verification.verified_at).toLocaleDateString('tr-TR') }
         )
         .setFooter({ text: 'ToldClient Doğrulama Sistemi' })
         .setTimestamp();
