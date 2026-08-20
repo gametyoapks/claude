@@ -1,5 +1,0 @@
-{
-  "name": "ToldClient Bot",
-  "description": "Discord verification bot with Supabase integration",
-  "builder": "dockerfile"
-}}
