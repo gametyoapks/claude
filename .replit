@@ -3,10 +3,9 @@ modules = ["nodejs-20"]
 
 [env]
 BOT_TOKEN = "MTUzOTMwNDA1NjE3MzEwOTM5OQ.GuBBvV.8QtfE0CGbvz-swt-lSb2IzNzBefHYMoOQ_VNUg"
-SUPABASE_URL = "https://ezgkggtbeqapynrsesxs.supabase.co"
-SUPABASE_KEY = "sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1"
+CLIENT_ID = "1539304056173109399"
 GUILD_ID = "1530913629241606255"
 ROLE_ID = "1538161497929424996"
-CLIENT_ID = "1539304056173109399"
+SUPABASE_URL = "https://ezgkggtbeqapynrsesxs.supabase.co"
+SUPABASE_KEY = "sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1"
 VERIFY_SITE_URL = "https://toldclient.netlify.app"
-NODE_ENV = "development"
