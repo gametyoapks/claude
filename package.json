@@ -1,28 +1,15 @@
 {
   "name": "toldclient-bot",
-  "version": "2.0.0",
-  "description": "ToldClient Discord Doğrulama Botu - Production Ready",
+  "version": "1.0.0",
+  "description": "Discord verification bot with Supabase",
   "main": "bot.js",
-  "type": "commonjs",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "node bot.js",
-    "test": "echo \"No tests specified\""
+    "start": "node bot.js"
   },
-  "keywords": [
-    "discord",
-    "bot",
-    "verification",
-    "supabase"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "discord.js": "14.14.0"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "preferGlobal": false,
-  "private": true
+    "node": "18.20.8"
+  }
 }
