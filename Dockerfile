@@ -1,17 +1,11 @@
-FROM node:18-alpine
-
-LABEL maintainer="ToldClient"
-LABEL description="Discord verification bot with Supabase integration"
+FROM node:18.20.8-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json .
 
-RUN npm ci --only=production
+RUN npm install --production
 
 COPY bot.js .
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "console.log('ok')" || exit 1
-
-CMD ["node", "bot.js"]
+CMD ["npm", "start"]
