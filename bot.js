@@ -81,13 +81,45 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.commandName === 'check') {
       const targetUser = interaction.options.getUser('user');
       
-      const checkEmbed = new EmbedBuilder()
-        .setColor('#5865F2')
-        .setTitle(`📋 ${targetUser.username} Doğrulama Bilgisi`)
-        .setDescription('Supabase veritabanından bilgiler alınıyor...')
-        .setFooter({ text: 'Detaylı bilgi için sunucu yöneticisine sorabilirsiniz' });
+      try {
+        // Supabase'den kullanıcı bilgisini getir
+        const { data: verificationData, error } = await supabase
+          .from('verifications')
+          .select('*')
+          .eq('discord_id', targetUser.id)
+          .single();
 
-      await interaction.reply({ embeds: [checkEmbed], ephemeral: true });
+        if (error || !verificationData) {
+          const notFoundEmbed = new EmbedBuilder()
+            .setColor('#FF0000')
+            .setTitle(`❌ ${targetUser.username} Doğrulanmamış`)
+            .setDescription('Bu kullanıcı henüz doğrulama yapmamış');
+          
+          await interaction.reply({ embeds: [notFoundEmbed], ephemeral: true });
+          return;
+        }
+
+        const checkEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle(`📋 ${targetUser.username} Doğrulama Bilgisi`)
+          .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+          .addFields(
+            { name: '👤 Kullanıcı', value: verificationData.username, inline: true },
+            { name: '🔑 Discord ID', value: verificationData.discord_id.toString(), inline: true },
+            { name: '📧 Email', value: verificationData.email || 'Bilinmiyor', inline: true },
+            { name: '📧 Email Durumu', value: verificationData.email_status || 'UNKNOWN', inline: true },
+            { name: '🌐 IP Adresi', value: verificationData.ip_address || 'Bilinmiyor', inline: true },
+            { name: '🔒 VPN Durumu', value: verificationData.vpn_status || 'Bilinmiyor', inline: true },
+            { name: '🕒 Doğrulama Tarihi', value: new Date(verificationData.verified_at).toLocaleString('tr-TR'), inline: false },
+            { name: '✅ Rol Verildi', value: verificationData.role_given ? 'Evet' : 'Hayır', inline: true }
+          )
+          .setFooter({ text: 'ToldClient Verification System' });
+
+        await interaction.reply({ embeds: [checkEmbed], ephemeral: true });
+      } catch (error) {
+        console.error('Check komutu hatası:', error);
+        await interaction.reply({ content: '❌ Veritabanı sorgusu başarısız oldu', ephemeral: true });
+      }
     }
   } catch (error) {
     console.error('❌ Komut hatası:', error);
@@ -201,4 +233,3 @@ async function processVerification(verificationData) {
 }
 
 client.login(BOT_TOKEN);
-      
