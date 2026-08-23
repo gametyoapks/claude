@@ -1,17 +1,16 @@
-const { Client, GatewayIntentBits, EmbedBuilder, REST, Routes, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes, EmbedBuilder } = require('discord.js');
 const { createClient } = require('@supabase/supabase-js');
 
-// Config
-const BOT_TOKEN = process.env.BOT_TOKEN || 'BOT_TOKEN';
+const BOT_TOKEN = process.env.BOT_TOKEN || 'HATA: BOT_TOKEN SET EDILMEDI';
 const CLIENT_ID = process.env.CLIENT_ID || '1539304056173109399';
 const GUILD_ID = process.env.GUILD_ID || '1530913629241606255';
 const ROLE_ID = process.env.ROLE_ID || '1538161497929424996';
-const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || '1539306856865071225';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ezgkggtbeqapynrsesxs.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1';
 const VERIFY_SITE_URL = process.env.VERIFY_SITE_URL || 'https://toldclient.netlify.app';
+const LOG_CHANNEL_ID = '1539306856865071225';
 
-// Initialize
+const SUPABASE_URL = 'https://ezgkggtbeqapynrsesxs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bt0PXWm2xIRKEv-vopP7Zg_sCzYH2e1';
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -21,48 +20,37 @@ const client = new Client({
 });
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
-console.log('🚀 ToldClient Bot başlatılıyor...');
-
-// Event: Ready
-client.once('ready', async () => {
-  console.log(`✅ Bot giriş yaptı: ${client.user.tag}`);
-
-  try {
-    const commands = [
+const commands = [
+  {
+    name: 'verify',
+    description: 'Discord sunucusuna katılmak için doğrulama linkini göster'
+  },
+  {
+    name: 'check',
+    description: 'Bir kullanıcının doğrulama bilgisini kontrol et',
+    options: [
       {
-        name: 'verify',
-        description: 'Doğrulama sayfasına giderek üye olmayı başlat'
-      },
-      {
-        name: 'check',
-        description: 'Kullanıcının doğrulama durumunu kontrol et',
-        options: [
-          {
-            name: 'user',
-            description: 'Kontrol edilecek kullanıcı',
-            type: 6,
-            required: true
-          }
-        ]
-      },
-      {
-        name: 'manual-verify',
-        description: 'Manual doğrulama (ADMIN ONLY)',
-        options: [
-          {
-            name: 'user',
-            description: 'Doğrulanacak kullanıcı',
-            type: 6,
-            required: true
-          }
-        ]
+        name: 'user',
+        description: 'Kontrol edilecek kullanıcı',
+        type: 6,
+        required: true
       }
-    ];
+    ]
+  }
+];
 
-    const rest = new REST().setToken(BOT_TOKEN);
+client.once('ready', async () => {
+  console.log(`✅ Bot aktif: ${client.user.tag}`);
+  
+  try {
+    console.log('📝 Komutlar kaydediliyor...');
+    console.log('Guild ID:', GUILD_ID);
+    console.log('Client ID:', CLIENT_ID);
+    
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
-    console.log('✅ Komutlar kaydedildi');
+    console.log('✅ Komutlar başarıyla kaydedildi');
   } catch (error) {
     console.error('❌ Komut kayıt hatası:', error);
   }
@@ -70,168 +58,98 @@ client.once('ready', async () => {
   startVerificationPolling();
 });
 
-// Event: Interaction (Commands)
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  console.log(`📨 Komut: ${interaction.commandName} | Kullanıcı: ${interaction.user.tag}`);
+  console.log(`Komut alındı: ${interaction.commandName}`);
 
   try {
     if (interaction.commandName === 'verify') {
-      const embed = new EmbedBuilder()
+      const verifyEmbed = new EmbedBuilder()
         .setColor('#5865F2')
         .setTitle('🔐 ToldClient Doğrulama')
-        .setDescription(`[Doğrulama sayfasına git →](${VERIFY_SITE_URL})`)
+        .setDescription(`[Discord ile Doğrula](${VERIFY_SITE_URL})`)
         .addFields(
-          { name: '✅ Güvenli', value: 'Discord OAuth ile' },
-          { name: '⚡ Hızlı', value: '30 saniyede tamamlanır' }
-        );
+          { name: '✅ Güvenli Giriş', value: 'Discord hesabınız ile güvenli doğrulama yapın' },
+          { name: '⚡ Hızlı İşlem', value: '30 saniyede sunucuya katılın' }
+        )
+        .setFooter({ text: 'Doğrulama sayfasında tüm adımları tamamlayın' });
 
-      await interaction.reply({ embeds: [embed], ephemeral: true });
-      console.log(`✅ /verify komutu çalıştırıldı: ${interaction.user.username}`);
+      await interaction.reply({ embeds: [verifyEmbed], ephemeral: true });
     }
 
     if (interaction.commandName === 'check') {
       const targetUser = interaction.options.getUser('user');
-
+      
       try {
-        const { data, error } = await supabase
+        // Supabase'den kullanıcı bilgisini getir
+        const { data: verificationData, error } = await supabase
           .from('verifications')
           .select('*')
           .eq('discord_id', targetUser.id)
           .single();
 
-        if (error || !data) {
-          const errorEmbed = new EmbedBuilder()
+        if (error || !verificationData) {
+          const notFoundEmbed = new EmbedBuilder()
             .setColor('#FF0000')
             .setTitle(`❌ ${targetUser.username} Doğrulanmamış`)
             .setDescription('Bu kullanıcı henüz doğrulama yapmamış');
-
-          await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+          
+          await interaction.reply({ embeds: [notFoundEmbed], ephemeral: true });
           return;
         }
 
-        const resultEmbed = new EmbedBuilder()
-          .setColor(data.role_given ? '#00FF00' : '#FF9900')
-          .setTitle(`${data.role_given ? '✅' : '⏳'} ${targetUser.username}`)
+        const checkEmbed = new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle(`📋 ${targetUser.username} Doğrulama Bilgisi`)
+          .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
           .addFields(
-            { name: '📧 Email', value: data.email || 'Yok', inline: true },
-            { name: '📅 Doğrulanma Tarihi', value: data.verified_at ? new Date(data.verified_at).toLocaleString('tr-TR') : 'Bilinmiyor', inline: true },
-            { name: '🔒 Rol Verildi', value: data.role_given ? 'Evet' : 'Hayır', inline: true }
-          );
+            { name: '👤 Kullanıcı', value: verificationData.username, inline: true },
+            { name: '🔑 Discord ID', value: verificationData.discord_id.toString(), inline: true },
+            { name: '📧 Email', value: verificationData.email || 'Bilinmiyor', inline: true },
+            { name: '📧 Email Durumu', value: verificationData.email_status || 'UNKNOWN', inline: true },
+            { name: '🌐 IP Adresi', value: verificationData.ip_address || 'Bilinmiyor', inline: true },
+            { name: '🔒 VPN Durumu', value: verificationData.vpn_status || 'Bilinmiyor', inline: true },
+            { name: '🕒 Doğrulama Tarihi', value: new Date(verificationData.verified_at).toLocaleString('tr-TR'), inline: false },
+            { name: '✅ Rol Verildi', value: verificationData.role_given ? 'Evet' : 'Hayır', inline: true }
+          )
+          .setFooter({ text: 'ToldClient Verification System' });
 
-        await interaction.reply({ embeds: [resultEmbed], ephemeral: true });
+        await interaction.reply({ embeds: [checkEmbed], ephemeral: true });
       } catch (error) {
-        console.error('❌ Check hatası:', error);
-        await interaction.reply({ content: '❌ Sorgu başarısız: ' + error.message, ephemeral: true });
+        console.error('Check komutu hatası:', error);
+        await interaction.reply({ content: '❌ Veritabanı sorgusu başarısız oldu', ephemeral: true });
       }
     }
-
-    if (interaction.commandName === 'manual-verify') {
-      // Admin check
-      if (!interaction.member.permissions.has('ADMINISTRATOR')) {
-        await interaction.reply({ content: '❌ Bu komut sadece yöneticiler tarafından kullanılabilir', ephemeral: true });
-        return;
-      }
-
-      const targetUser = interaction.options.getUser('user');
-      const guild = client.guilds.cache.get(GUILD_ID);
-
-      if (!guild) {
-        await interaction.reply({ content: '❌ Sunucu bulunamadı', ephemeral: true });
-        return;
-      }
-
-      try {
-        const member = await guild.members.fetch(targetUser.id);
-        
-        // Rol ver
-        await member.roles.add(ROLE_ID);
-        console.log(`✅ Manual rol verildi: ${targetUser.username}`);
-
-        // Supabase'e kayıt et
-        const { error } = await supabase
-          .from('verifications')
-          .insert([{
-            discord_id: parseInt(targetUser.id),
-            username: targetUser.username,
-            account_created_at: new Date().toISOString(),
-            ip_address: '0.0.0.0',
-            vpn_status: 'Bilinmiyor',
-            email: 'manual-verify',
-            email_status: 'MANUAL',
-            role_given: true
-          }]);
-
-        if (error) console.error('❌ Supabase insert hatası:', error);
-
-        // DM gönder
-        await targetUser.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('#00FF00')
-              .setTitle('✅ Sunucuya Hoşgeldiniz!')
-              .setDescription('Yönetici tarafından rol verildi')
-          ]
-        }).catch(() => console.log('⚠️ DM gönderilemedi'));
-
-        // Log
-        const logChannel = client.channels.cache.get(LOG_CHANNEL_ID);
-        if (logChannel) {
-          await logChannel.send({
-            embeds: [
-              new EmbedBuilder()
-                .setColor('#FFA500')
-                .setTitle('⚠️ MANUEL DOĞRULAMA')
-                .setDescription(`${targetUser.username} (${targetUser.id})`)
-                .setFooter({ text: 'Yönetici tarafından verildi' })
-            ]
-          });
-        }
-
-        await interaction.reply({ content: `✅ ${targetUser.username} için rol verildi`, ephemeral: true });
-
-      } catch (error) {
-        console.error('❌ Manual verify hatası:', error);
-        await interaction.reply({ content: '❌ Başarısız: ' + error.message, ephemeral: true });
-      }
-    }
-
   } catch (error) {
-    console.error('❌ İnteraksiyon hatası:', error);
-    try {
-      await interaction.reply({ content: '❌ Hata oluştu: ' + error.message, ephemeral: true });
-    } catch (e) {
-      console.error('❌ Reply gönderme hatası:', e);
-    }
+    console.error('❌ Komut hatası:', error);
   }
 });
 
-// Polling: Supabase'dan doğrulama kontrol
 async function startVerificationPolling() {
-  console.log('🔄 Doğrulama polling başlatıldı (5sn arası)');
-
+  console.log('🔄 Doğrulama izlemesi başlatıldı...');
+  
   setInterval(async () => {
     try {
-      const { data: pendingUsers, error } = await supabase
+      // role_given = false VEYA NULL olan kayıtları al
+      const { data: unverifiedUsers, error } = await supabase
         .from('verifications')
         .select('*')
-        .eq('role_given', false)
+        .or('role_given.eq.false,role_given.is.null')
         .order('verified_at', { ascending: false })
-        .limit(5);
+        .limit(1);
 
       if (error) {
-        console.error('❌ Supabase query hatası:', error);
+        console.error('❌ Supabase sorgu hatası:', error);
         return;
       }
 
-      if (!pendingUsers || pendingUsers.length === 0) return;
-
-      console.log(`📊 Pending kullanıcılar: ${pendingUsers.length}`);
-
-      for (const user of pendingUsers) {
-        await processVerification(user);
+      if (!unverifiedUsers || unverifiedUsers.length === 0) {
+        return;
       }
+
+      const user = unverifiedUsers[0];
+      await processVerification(user);
 
     } catch (error) {
       console.error('❌ Polling hatası:', error);
@@ -243,7 +161,7 @@ async function processVerification(verificationData) {
   try {
     const { discord_id, username, email, email_status, ip_address, vpn_status } = verificationData;
 
-    console.log(`🎯 İşleniyor: ${username} (${discord_id})`);
+    console.log(`📨 Yeni doğrulama bulundu: ${username} (${discord_id})`);
 
     const guild = client.guilds.cache.get(GUILD_ID);
     if (!guild) {
@@ -253,53 +171,52 @@ async function processVerification(verificationData) {
 
     const member = await guild.members.fetch(discord_id).catch(() => null);
     if (!member) {
-      console.log(`⚠️ Üye sunucuda değil: ${username}`);
+      console.log('⚠️ Üye sunucuda değil:', username);
       return;
     }
 
-    // Rol ver
     await member.roles.add(ROLE_ID).catch(e => console.error('❌ Rol verme hatası:', e));
     console.log(`✅ Rol verildi: ${username}`);
 
-    // DM gönder
-    try {
-      await member.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor('#00FF00')
-            .setTitle('✅ Sunucuya Hoşgeldiniz!')
-            .setDescription(`Merhaba ${username}!`)
-            .addFields(
-              { name: '📧 Email', value: email || 'Yok' },
-              { name: '🌐 IP', value: ip_address || 'Yok' },
-              { name: '🔒 VPN', value: vpn_status || 'Yok' }
-            )
-        ]
-      });
-    } catch (e) {
-      console.log(`⚠️ DM gönderilemedi: ${username}`);
-    }
+    await member.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor('#00FF00')
+          .setTitle('✅ Sunucuya Hoşgeldiniz!')
+          .setDescription(`Merhaba ${username}! Üye rolü başarıyla verildi.`)
+          .addFields(
+            { name: '📧 Email', value: email || 'Bilinmiyor' },
+            { name: '🌐 IP', value: ip_address || 'Bilinmiyor' },
+            { name: '🔒 VPN', value: vpn_status || 'Bilinmiyor' }
+          )
+      ]
+    }).catch(() => console.log('⚠️ DM gönderilemedi:', username));
 
-    // Log kanalı
     const logChannel = client.channels.cache.get(LOG_CHANNEL_ID);
     if (logChannel) {
-      const emailBadge = email_status === 'SPAM' ? '⚠️ SPAM' : (email_status === 'FREE' ? '📧 FREE' : '✅ VERIFIED');
+      const emailStatusText = email_status === 'SPAM' 
+        ? '⚠️ SPAM EMAIL' 
+        : (email_status === 'FREE' ? '📧 FREE EMAIL' : '✅ DOĞRULANDI');
 
-      await logChannel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor('#00FF00')
-            .setTitle('✅ DOĞRULAMA BAŞARILI')
-            .addFields(
-              { name: '👤 Kullanıcı', value: `${username} (${member.user.tag})`, inline: true },
-              { name: '🔑 ID', value: `${discord_id}`, inline: true },
-              { name: '📧 Email', value: emailBadge, inline: true }
-            )
-        ]
-      });
+      const logEmbed = new EmbedBuilder()
+        .setColor('#00FF00')
+        .setTitle('✅ DOĞRULAMA BAŞARILI')
+        .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+        .addFields(
+          { name: '👤 Kullanıcı', value: `${username} (${member.user.tag})`, inline: true },
+          { name: '🔑 Discord ID', value: `${discord_id}`, inline: true },
+          { name: '📧 Email', value: email || 'Bilinmiyor', inline: true },
+          { name: '📧 Durum', value: emailStatusText, inline: true },
+          { name: '🌐 IP Adresi', value: ip_address || 'Bilinmiyor', inline: true },
+          { name: '🔒 VPN', value: vpn_status || 'Bilinmiyor', inline: true },
+          { name: '🕒 Zaman', value: new Date().toLocaleString('tr-TR'), inline: false }
+        )
+        .setFooter({ text: 'ToldClient Verification System' });
+
+      await logChannel.send({ embeds: [logEmbed] }).catch(e => console.error('❌ Log mesajı hatası:', e));
+      console.log(`✅ Log mesajı gönderildi: ${username}`);
     }
 
-    // DB update
     const { error: updateError } = await supabase
       .from('verifications')
       .update({ role_given: true })
@@ -316,12 +233,4 @@ async function processVerification(verificationData) {
   }
 }
 
-// Login
 client.login(BOT_TOKEN);
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('👋 Bot kapatılıyor...');
-  client.destroy();
-  process.exit(0);
-});
