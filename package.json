@@ -1,6 +1,7 @@
 {
   "name": "toldclient-bot",
   "version": "1.0.0",
+  "description": "ToldClient Discord Verification Bot",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
